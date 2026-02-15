@@ -2,97 +2,74 @@ package analyzer
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 )
 
-// Image represents a resolved container image ready for analysis.
+// Image represents a fully resolved container image ready for analysis.
+// It contains normalized metadata extracted from a remote registry.
 type Image struct {
 	Reference string
 	Digest    string
 	MediaType string
 	Size      int64
 	Layers    []Layer
-	Raw       v1.Image
 	LoadedAt  time.Time
 }
 
-// LoadImage loads a remote image with default timeout and retry.
-func LoadImage(ref string) (*Image, error) {
-	return LoadImageWithOptions(ref, 30*time.Second, 2)
-}
-
-// LoadImageWithOptions allows custom timeout and retry attempts.
-func LoadImageWithOptions(ref string, timeout time.Duration, retries int) (*Image, error) {
-	if ref == "" {
-		return nil, fmt.Errorf("image reference cannot be empty")
+// Load resolves and builds a container image from a remote reference.
+//
+// It performs:
+//   - Strict reference validation
+//   - Controlled retry with exponential backoff
+//   - Structured error normalization
+//   - Metrics collection
+//
+// It returns the resolved Image, execution Metrics and an error (if any).
+func Load(ctx context.Context, ref string, opts ...Option) (*Image, Metrics, error) {
+	options := defaultOptions()
+	for _, opt := range opts {
+		opt(options)
 	}
 
-	parsedRef, err := name.ParseReference(ref)
-	if err != nil {
-		return nil, fmt.Errorf("invalid image reference %q: %w", ref, err)
+	collector := newMetricsCollector()
+
+	// ---- FETCH PHASE ----
+
+	collector.startFetch()
+
+	var rawImg v1.Image
+	var fetchErr error
+	var attempts int
+
+	attempts, fetchErr = retry(ctx, options.retries, options.backoff, func() error {
+		var err error
+		rawImg, err = fetchImage(ctx, ref, options)
+		return err
+	})
+
+	collector.endFetch(attempts, false) // digestPinned can be improved later
+
+	if fetchErr != nil {
+		collector.markSuccess(false)
+		return nil, collector.snapshot(), fetchErr
 	}
 
-	var img v1.Image
-	var lastErr error
+	// ---- BUILD PHASE ----
 
-	for attempt := 0; attempt <= retries; attempt++ {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	collector.startBuild()
 
-		img, lastErr = remote.Image(parsedRef, remote.WithContext(ctx))
-		cancel()
+	image, buildErr := buildImage(ref, rawImg, options)
 
-		if lastErr == nil {
-			break
-		}
+	collector.endBuild()
 
-		time.Sleep(time.Duration(attempt+1) * 500 * time.Millisecond)
+	if buildErr != nil {
+		collector.markSuccess(false)
+		return nil, collector.snapshot(), buildErr
 	}
 
-	if lastErr != nil {
-		return nil, fmt.Errorf("failed to fetch remote image after retries: %w", lastErr)
-	}
+	collector.markSuccess(true)
 
-	digest, err := img.Digest()
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve image digest: %w", err)
-	}
-
-	mediaType, err := img.MediaType()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve image media type: %w", err)
-	}
-
-	size, err := img.Size()
-	if err != nil {
-		return nil, fmt.Errorf("failed to compute image size: %w", err)
-	}
-
-	rawLayers, err := img.Layers()
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract image layers: %w", err)
-	}
-
-	if len(rawLayers) == 0 {
-		return nil, fmt.Errorf("image contains no layers")
-	}
-
-	structuredLayers, err := ExtractLayers(rawLayers)
-	if err != nil {
-		return nil, fmt.Errorf("failed to structure layers: %w", err)
-	}
-
-	return &Image{
-		Reference: ref,
-		Digest:    digest.String(),
-		MediaType: string(mediaType),
-		Size:      size,
-		Layers:    structuredLayers,
-		Raw:       img,
-		LoadedAt:  time.Now(),
-	}, nil
+	return image, collector.snapshot(), nil
 }

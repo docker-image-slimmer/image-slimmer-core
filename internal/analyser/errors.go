@@ -31,6 +31,8 @@ const (
 	CodeSizeFailed      ErrorCode = "SIZE_FAILED"
 	CodeLayerExtract    ErrorCode = "LAYER_EXTRACT_FAILED"
 
+	CodeValidationFailed ErrorCode = "VALIDATION_FAILED"
+
 	// Fallback classification
 	CodeUnknown ErrorCode = "UNKNOWN"
 )

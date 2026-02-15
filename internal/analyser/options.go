@@ -33,12 +33,13 @@ type FetchMetrics struct {
 // options holds internal configuration for the analyzer.
 // It is intentionally unexported to enforce controlled construction.
 type options struct {
-	timeout     time.Duration
-	retries     int
-	backoff     time.Duration
-	keychain    authn.Keychain
-	transport   http.RoundTripper
-	metricsHook func(FetchMetrics)
+	timeout      time.Duration
+	retries      int
+	backoff      time.Duration
+	keychain     authn.Keychain
+	transport    http.RoundTripper
+	metricsHook  func(FetchMetrics)
+	metadataOnly bool
 }
 
 // Option defines a functional configuration modifier.
@@ -48,11 +49,12 @@ type Option func(*options)
 // These defaults are conservative and registry-safe.
 func defaultOptions() *options {
 	return &options{
-		timeout:   30 * time.Second,
-		retries:   2,
-		backoff:   500 * time.Millisecond,
-		keychain:  authn.DefaultKeychain,
-		transport: http.DefaultTransport,
+		timeout:      30 * time.Second,
+		retries:      2,
+		backoff:      500 * time.Millisecond,
+		keychain:     authn.DefaultKeychain,
+		transport:    http.DefaultTransport,
+		metadataOnly: false,
 	}
 }
 
@@ -111,5 +113,13 @@ func WithTransport(t http.RoundTripper) Option {
 func WithMetricsHook(h func(FetchMetrics)) Option {
 	return func(o *options) {
 		o.metricsHook = h
+	}
+}
+
+// WithMetadataOnly configures the analyzer to skip layer extraction
+// and return only high-level image metadata (digest, size, media type).
+func WithMetadataOnly(enabled bool) Option {
+	return func(o *options) {
+		o.metadataOnly = enabled
 	}
 }
