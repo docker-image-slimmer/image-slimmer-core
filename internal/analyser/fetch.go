@@ -39,8 +39,8 @@ func fetchImage(ctx context.Context, ref string, opts *options) (v1.Image, error
 		remote.WithContext(ctx),
 	}
 
-	if opts.auth != nil {
-		remoteOpts = append(remoteOpts, remote.WithAuth(opts.auth))
+	if opts.keychain != nil {
+		remoteOpts = append(remoteOpts, remote.WithAuthFromKeychain(opts.keychain))
 	}
 
 	if opts.transport != nil {
