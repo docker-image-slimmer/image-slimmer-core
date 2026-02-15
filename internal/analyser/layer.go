@@ -1,7 +1,6 @@
 package analyzer
 
 import (
-	"fmt"
 	"io"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -18,9 +17,12 @@ type Layer struct {
 }
 
 // ExtractLayers converts raw v1 layers into structured Layer metadata.
-func ExtractLayers(rawLayers []v1.Layer) ([]Layer, error) {
+// All errors are normalized to AnalyzerError.
+func ExtractLayers(rawLayers []v1.Layer, ref string) ([]Layer, error) {
+	const op = "extract_layers"
+
 	if len(rawLayers) == 0 {
-		return nil, fmt.Errorf("no layers to extract")
+		return nil, NewError(CodeLayerExtract, op, ref, "no layers to extract", nil)
 	}
 
 	layers := make([]Layer, 0, len(rawLayers))
@@ -29,34 +31,34 @@ func ExtractLayers(rawLayers []v1.Layer) ([]Layer, error) {
 
 		digest, err := l.Digest()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get layer digest (index %d): %w", i, err)
+			return nil, NewError(CodeLayerExtract, op, ref, "failed to get layer digest", err)
 		}
 
 		diffID, err := l.DiffID()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get layer diffID (index %d): %w", i, err)
+			return nil, NewError(CodeLayerExtract, op, ref, "failed to get layer diffID", err)
 		}
 
 		mediaType, err := l.MediaType()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get layer media type (index %d): %w", i, err)
+			return nil, NewError(CodeLayerExtract, op, ref, "failed to get layer media type", err)
 		}
 
 		compressedSize, err := l.Size()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get compressed size (index %d): %w", i, err)
+			return nil, NewError(CodeLayerExtract, op, ref, "failed to get compressed size", err)
 		}
 
 		// Calculate uncompressed size manually
 		rc, err := l.Uncompressed()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get uncompressed reader (index %d): %w", i, err)
+			return nil, NewError(CodeLayerExtract, op, ref, "failed to get uncompressed reader", err)
 		}
 
 		uncompressedSize, err := io.Copy(io.Discard, rc)
 		rc.Close()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute uncompressed size (index %d): %w", i, err)
+			return nil, NewError(CodeLayerExtract, op, ref, "failed to compute uncompressed size", err)
 		}
 
 		layers = append(layers, Layer{

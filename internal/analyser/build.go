@@ -11,13 +11,14 @@ import (
 // This function represents the internal build boundary of the analyzer.
 // All external errors are normalized into AnalyzerError.
 //
-// It guarantees:
+// Guarantees:
 //   - No raw registry errors leak outside
 //   - Strict structural validation
 //   - Deterministic metadata extraction
 func buildImage(ref string, img v1.Image, opts *options) (*Image, error) {
 	const op = "build"
 
+	// ---- NIL IMAGE CHECK ----
 	if img == nil {
 		return nil, NewError(
 			CodeBuildFailed,
@@ -29,7 +30,6 @@ func buildImage(ref string, img v1.Image, opts *options) (*Image, error) {
 	}
 
 	// ---- DIGEST ----
-
 	digest, err := img.Digest()
 	if err != nil {
 		return nil, NewError(
@@ -42,7 +42,6 @@ func buildImage(ref string, img v1.Image, opts *options) (*Image, error) {
 	}
 
 	// ---- MEDIA TYPE ----
-
 	mediaType, err := img.MediaType()
 	if err != nil {
 		return nil, NewError(
@@ -55,7 +54,6 @@ func buildImage(ref string, img v1.Image, opts *options) (*Image, error) {
 	}
 
 	// ---- SIZE ----
-
 	size, err := img.Size()
 	if err != nil {
 		return nil, NewError(
@@ -68,11 +66,9 @@ func buildImage(ref string, img v1.Image, opts *options) (*Image, error) {
 	}
 
 	// ---- LAYERS (optional) ----
-
 	var structuredLayers []Layer
 
 	if !opts.metadataOnly {
-
 		rawLayers, err := img.Layers()
 		if err != nil {
 			return nil, NewError(
@@ -94,7 +90,8 @@ func buildImage(ref string, img v1.Image, opts *options) (*Image, error) {
 			)
 		}
 
-		structuredLayers, err = ExtractLayers(rawLayers)
+		// ---- EXTRACT LAYERS ----
+		structuredLayers, err = ExtractLayers(rawLayers, ref)
 		if err != nil {
 			return nil, NewError(
 				CodeLayerExtract,
@@ -106,8 +103,7 @@ func buildImage(ref string, img v1.Image, opts *options) (*Image, error) {
 		}
 	}
 
-	// ---- FINAL STRUCT ----
-
+	// ---- FINAL STRUCTURE ----
 	return &Image{
 		Reference: ref,
 		Digest:    digest.String(),
