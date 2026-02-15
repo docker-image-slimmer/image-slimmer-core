@@ -1,4 +1,4 @@
-# Image Slimmer Core
+# Overview
 
 Image Slimmer Core is a deterministic container image analysis engine written in Go, designed to model, interpret, and structure container image metadata into reproducible slimming plans. It acts as the foundational intelligence layer for systems that need deep visibility into image composition without coupling to Docker CLI execution, runtime mutation, or orchestration logic.
 
