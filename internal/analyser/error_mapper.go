@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-// MapRegistryError converts external registry-related errors into a structured AnalyzerError.
-// It ensures that no external or raw transport errors leak outside the analyzer boundary.
+// MapRegistryError converts external registry-related errors into a structured AnalyzerError
+// It ensures that no external or raw transport errors leak outside the analyzer boundary
 func MapRegistryError(op, ref string, err error) error {
 	// Fast path: no error
 	if err == nil {
@@ -50,7 +50,7 @@ func MapRegistryError(op, ref string, err error) error {
 	}
 
 	// Fallback classification using error message inspection
-	// Some registry implementations return inconsistent or wrapped errors.
+	// Some registry implementations return inconsistent or wrapped errors
 	msg := strings.ToLower(err.Error())
 
 	switch {
@@ -91,7 +91,7 @@ func MapRegistryError(op, ref string, err error) error {
 	return NewError(CodeUnknown, op, ref, "unknown registry error", err)
 }
 
-// classifyNetworkError normalizes lower-level transport errors into structured analyzer errors.
+// classifyNetworkError normalizes lower-level transport errors into structured analyzer errors
 func classifyNetworkError(op, ref string, err error) error {
 	var netErr net.Error
 	if errors.As(err, &netErr) {

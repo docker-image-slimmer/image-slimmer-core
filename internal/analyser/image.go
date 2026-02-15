@@ -7,8 +7,8 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 )
 
-// Image represents a fully resolved container image ready for analysis.
-// It contains normalized metadata extracted from a remote registry.
+// Image represents a fully resolved container image ready for analysis
+// It contains normalized metadata extracted from a remote registry
 type Image struct {
 	Reference string
 	Digest    string
@@ -18,7 +18,7 @@ type Image struct {
 	LoadedAt  time.Time
 }
 
-// Load resolves and builds a container image from a remote reference.
+// Load resolves and builds a container image from a remote reference
 //
 // It performs:
 //   - Strict reference validation
@@ -26,7 +26,7 @@ type Image struct {
 //   - Structured error normalization
 //   - Metrics collection
 //
-// It returns the resolved Image, execution Metrics and an error (if any).
+// It returns the resolved Image, execution Metrics and an error (if any)
 func Load(ctx context.Context, ref string, opts ...Option) (*Image, Metrics, error) {
 	options := defaultOptions()
 	for _, opt := range opts {

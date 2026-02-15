@@ -9,8 +9,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 )
 
-// fetchImage resolves and downloads a container image from a remote registry.
-// This function acts as a strict external boundary: all errors are normalized.
+// fetchImage resolves and downloads a container image from a remote registry
+// This function acts as a strict external boundary: all errors are normalized
 func fetchImage(ctx context.Context, ref string, opts *options) (v1.Image, error) {
 	const op = "fetch"
 

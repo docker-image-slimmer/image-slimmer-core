@@ -6,7 +6,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 )
 
-// Layer represents extracted metadata from a container image layer.
+// Layer represents extracted metadata from a container image layer
 type Layer struct {
 	Index            int
 	Digest           string
@@ -16,7 +16,7 @@ type Layer struct {
 	UncompressedSize int64
 }
 
-// ExtractLayers converts raw v1 layers into structured Layer metadata.
+// ExtractLayers converts raw v1 layers into structured Layer metadata
 // All errors are normalized to AnalyzerError.
 func ExtractLayers(rawLayers []v1.Layer, ref string) ([]Layer, error) {
 	const op = "extract_layers"

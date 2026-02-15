@@ -1,6 +1,6 @@
 package analyzer
 
-// Validate ensures the Image is structurally consistent.
+// Validate ensures the Image is structurally consistent
 //
 // It verifies:
 //   - Non-nil image
@@ -8,7 +8,7 @@ package analyzer
 //   - Positive size
 //   - Layer integrity
 //
-// All errors are normalized into AnalyzerError.
+// All errors are normalized into AnalyzerError
 func (i *Image) Validate() error {
 	const op = "validate"
 

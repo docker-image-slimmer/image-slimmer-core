@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 )
 
-// ExtractLayerToFS writes the contents of a single Layer to the target directory.
-// It uses the Layer info from Image.Layers.
+// ExtractLayerToFS writes the contents of a single Layer to the target directory
+// It uses the Layer info from Image.Layers
 func ExtractLayerToFS(layer Layer, layerReader io.ReadCloser, targetDir string) error {
 	defer layerReader.Close()
 
@@ -61,8 +61,8 @@ func ExtractLayerToFS(layer Layer, layerReader io.ReadCloser, targetDir string) 
 	return nil
 }
 
-// ExtractAllLayersToFS writes all layers from an image to targetDir.
-// Recebe os Layers da struct Image e um map de readers.
+// ExtractAllLayersToFS writes all layers from an image to targetDir
+// Recebe os Layers da struct Image e um map de readers
 func ExtractAllLayersToFS(img *Image, layerReaders map[int]io.ReadCloser, targetDir string) error {
 	if img == nil {
 		return NewError(CodeBuildFailed, "filesystem", "", "image is nil", nil)

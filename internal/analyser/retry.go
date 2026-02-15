@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-// retry executes fn and retries it according to the provided configuration.
+// retry executes fn and retries it according to the provided configuration
 //
-// attempts defines the maximum number of retries (not total executions).
+// attempts defines the maximum number of retries (not total executions)
 // Example: attempts=2 means:
 //
-//	1 initial execution + 2 retries = up to 3 total executions.
+//	1 initial execution + 2 retries = up to 3 total executions
 //
 // The retry mechanism guarantees:
 //   - Respect for context cancellation and deadlines
@@ -19,7 +19,7 @@ import (
 //   - Protection against duration overflow
 //
 // It returns the number of executions performed (including the first attempt)
-// and the final error (if any).
+// and the final error (if any)
 func retry(
 	ctx context.Context,
 	attempts int,
@@ -40,7 +40,7 @@ func retry(
 
 	for attempt := 0; attempt <= attempts; attempt++ {
 
-		// Check context before executing the function.
+		// Check context before executing the function
 		select {
 		case <-ctx.Done():
 			return executions, ctx.Err()
@@ -54,20 +54,20 @@ func retry(
 			return executions, nil
 		}
 
-		// Fail fast if error is not retryable.
+		// Fail fast if error is not retryable
 		if !isRetryable(err) {
 			return executions, err
 		}
 
-		// If this was the last allowed attempt, stop retrying.
+		// If this was the last allowed attempt, stop retrying
 		if attempt == attempts {
 			break
 		}
 
-		// Compute exponential backoff delay (capped).
+		// Compute exponential backoff delay (capped)
 		delay := exponentialBackoff(baseDelay, attempt)
 
-		// Respect remaining context deadline (timeout budget enforcement).
+		// Respect remaining context deadline (timeout budget enforcement)
 		if deadline, ok := ctx.Deadline(); ok {
 			remaining := time.Until(deadline)
 			if remaining <= 0 {
@@ -78,7 +78,7 @@ func retry(
 			}
 		}
 
-		// Use timer instead of time.Sleep to remain cancelable.
+		// Use timer instead of time.Sleep to remain cancelable
 		timer := time.NewTimer(delay)
 		select {
 		case <-ctx.Done():
@@ -91,11 +91,11 @@ func retry(
 	return executions, err
 }
 
-// isRetryable determines whether an error should trigger retry.
+// isRetryable determines whether an error should trigger retry
 //
-// Only AnalyzerError marked as Temporary() are considered retryable.
+// Only AnalyzerError marked as Temporary() are considered retryable
 // Unknown or external errors are treated as non-retryable to preserve
-// deterministic and safe behavior at the analyzer boundary.
+// deterministic and safe behavior at the analyzer boundary
 func isRetryable(err error) bool {
 	if ae, ok := AsAnalyzerError(err); ok {
 		return ae.Temporary()
@@ -103,7 +103,7 @@ func isRetryable(err error) bool {
 	return false
 }
 
-// exponentialBackoff calculates a capped exponential delay.
+// exponentialBackoff calculates a capped exponential delay
 //
 // delay = base * 2^attempt
 //
@@ -115,14 +115,14 @@ func exponentialBackoff(base time.Duration, attempt int) time.Duration {
 
 	const maxDelay = 30 * time.Second
 
-	// Prevent excessive bit shifting that may overflow.
+	// Prevent excessive bit shifting that may overflow
 	if attempt > 30 {
 		return maxDelay
 	}
 
 	delay := base << attempt
 
-	// Guard against overflow or excessive growth.
+	// Guard against overflow or excessive growth
 	if delay <= 0 || delay > maxDelay {
 		return maxDelay
 	}

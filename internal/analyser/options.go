@@ -10,28 +10,28 @@ import (
 // FetchMetrics represents structured telemetry data emitted
 // after an image fetch operation.
 type FetchMetrics struct {
-	// Reference is the original image reference string.
+	// Reference is the original image reference string
 	Reference string
 
-	// Duration represents total time spent fetching.
+	// Duration represents total time spent fetching
 	Duration time.Duration
 
-	// Digest is the resolved content digest of the image.
+	// Digest is the resolved content digest of the image
 	Digest string
 
 	// DigestPinned indicates whether the original reference
 	// was already pinned to a digest.
 	DigestPinned bool
 
-	// Attempts indicates how many attempts were performed.
+	// Attempts indicates how many attempts were performed
 	Attempts int
 
-	// Success indicates whether the fetch completed successfully.
+	// Success indicates whether the fetch completed successfully
 	Success bool
 }
 
-// options holds internal configuration for the analyzer.
-// It is intentionally unexported to enforce controlled construction.
+// options holds internal configuration for the analyzer
+// It is intentionally unexported to enforce controlled construction
 type options struct {
 	timeout      time.Duration
 	retries      int
@@ -42,11 +42,11 @@ type options struct {
 	metadataOnly bool
 }
 
-// Option defines a functional configuration modifier.
+// Option defines a functional configuration modifier
 type Option func(*options)
 
-// defaultOptions returns production-safe default configuration.
-// These defaults are conservative and registry-safe.
+// defaultOptions returns production-safe default configuration
+// These defaults are conservative and registry-safe
 func defaultOptions() *options {
 	return &options{
 		timeout:      30 * time.Second,
@@ -59,7 +59,7 @@ func defaultOptions() *options {
 }
 
 // WithTimeout configures the maximum allowed duration
-// for registry communication operations.
+// for registry communication operations
 func WithTimeout(d time.Duration) Option {
 	return func(o *options) {
 		if d > 0 {
@@ -69,7 +69,7 @@ func WithTimeout(d time.Duration) Option {
 }
 
 // WithRetries configures how many retry attempts
-// are allowed for transient registry failures.
+// are allowed for transient registry failures
 func WithRetries(n int) Option {
 	return func(o *options) {
 		if n >= 0 {
@@ -78,8 +78,8 @@ func WithRetries(n int) Option {
 	}
 }
 
-// WithBackoff configures the base delay between retry attempts.
-// This value is typically used as the starting backoff duration.
+// WithBackoff configures the base delay between retry attempts
+// This value is typically used as the starting backoff duration
 func WithBackoff(d time.Duration) Option {
 	return func(o *options) {
 		if d > 0 {
@@ -88,7 +88,7 @@ func WithBackoff(d time.Duration) Option {
 	}
 }
 
-// WithKeychain configures the credential resolution chain used for registry authentication.
+// WithKeychain configures the credential resolution chain used for registry authentication
 func WithKeychain(k authn.Keychain) Option {
 	return func(o *options) {
 		if k != nil {
@@ -97,8 +97,8 @@ func WithKeychain(k authn.Keychain) Option {
 	}
 }
 
-// WithTransport configures a custom HTTP transport.
-// This allows advanced control such as proxy, TLS, or tracing.
+// WithTransport configures a custom HTTP transport
+// This allows advanced control such as proxy, TLS, or tracing
 func WithTransport(t http.RoundTripper) Option {
 	return func(o *options) {
 		if t != nil {
@@ -109,7 +109,7 @@ func WithTransport(t http.RoundTripper) Option {
 
 // WithMetricsHook registers a callback invoked after
 // a fetch operation completes. It can be used for
-// logging, telemetry, or observability integration.
+// logging, telemetry, or observability integration
 func WithMetricsHook(h func(FetchMetrics)) Option {
 	return func(o *options) {
 		o.metricsHook = h
@@ -117,7 +117,7 @@ func WithMetricsHook(h func(FetchMetrics)) Option {
 }
 
 // WithMetadataOnly configures the analyzer to skip layer extraction
-// and return only high-level image metadata (digest, size, media type).
+// and return only high-level image metadata (digest, size, media type)
 func WithMetadataOnly(enabled bool) Option {
 	return func(o *options) {
 		o.metadataOnly = enabled

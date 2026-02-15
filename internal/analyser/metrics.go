@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Metrics represents immutable execution metrics snapshot.
+// Metrics represents immutable execution metrics snapshot
 // It is safe to expose externally.
 type Metrics struct {
 	FetchDuration time.Duration
@@ -17,8 +17,8 @@ type Metrics struct {
 	Success       bool
 }
 
-// metricsCollector accumulates execution timings internally.
-// It is not exposed outside the analyzer boundary.
+// metricsCollector accumulates execution timings internally
+// It is not exposed outside the analyzer boundary
 type metricsCollector struct {
 	mu sync.Mutex
 
@@ -35,7 +35,7 @@ type metricsCollector struct {
 	success       bool
 }
 
-// newMetricsCollector initializes timing collection.
+// newMetricsCollector initializes timing collection
 func newMetricsCollector() *metricsCollector {
 	return &metricsCollector{
 		start: time.Now(),
@@ -62,7 +62,7 @@ func (m *metricsCollector) endFetch(attempts int, digestPinned bool) {
 	m.digestPinned = digestPinned
 }
 
-// ---- BUILD PHASE ----
+// BUILD PHASE
 
 func (m *metricsCollector) startBuild() {
 	m.mu.Lock()
@@ -79,7 +79,7 @@ func (m *metricsCollector) endBuild() {
 	}
 }
 
-// ---- FINALIZATION ----
+// FINALIZATION
 
 // markSuccess marks the execution result.
 func (m *metricsCollector) markSuccess(success bool) {
@@ -88,8 +88,8 @@ func (m *metricsCollector) markSuccess(success bool) {
 	m.success = success
 }
 
-// snapshot produces an immutable Metrics struct.
-// TotalDuration is always computed from start time.
+// snapshot produces an immutable Metrics struct
+// TotalDuration is always computed from start time
 func (m *metricsCollector) snapshot() Metrics {
 	m.mu.Lock()
 	defer m.mu.Unlock()
